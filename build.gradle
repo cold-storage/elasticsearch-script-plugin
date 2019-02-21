@@ -1,0 +1,78 @@
+plugins {
+    id 'java'
+}
+
+/*
+    This version doesn't matter because we are not going to deploy this to any
+    maven repo.
+
+    The only version that matters is the version in
+    misc/plugin-descriptior.properties
+*/
+version 'IGNORE_VERSION'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+
+dependencies {
+    compile group: 'org.apache.lucene', name: 'lucene-core', version: '7.7.0'
+    compile group: 'org.elasticsearch', name: 'elasticsearch', version: '6.6.0'
+}
+
+task zipPlugin(type:Exec) {
+    /*
+        Elasticsearch plugins are kinda strange. They expect a zip file that
+        has a jar file and a plugin-descriptor.properties file inside.
+
+        Zip file content:
+
+        build $ unzip -l elasticsearch-script-plugin.zip
+        Archive:  elasticsearch-script-plugin.zip
+          Length      Date    Time    Name
+        ---------  ---------- -----   ----
+             6531  02-21-2019 14:25   elasticsearch-script-plugin.jar
+              177  02-21-2019 14:25   plugin-descriptor.properties
+        ---------                     -------
+             6708                     2 files
+
+        Jar file content:
+
+        build $ unzip -l elasticsearch-script-plugin.jar
+        Archive:  elasticsearch-script-plugin.jar
+          Length      Date    Time    Name
+        ---------  ---------- -----   ----
+                0  02-21-2019 14:25   META-INF/
+               25  02-21-2019 14:25   META-INF/MANIFEST.MF
+                0  02-21-2019 14:25   elasticsearch_script_plugin/
+             1585  02-21-2019 14:25   elasticsearch_script_plugin/JdsScriptPlugin$JdsScriptEngine$PureDfLeafFactory$1.class
+             3594  02-21-2019 14:25   elasticsearch_script_plugin/JdsScriptPlugin$JdsScriptEngine.class
+             3562  02-21-2019 14:25   elasticsearch_script_plugin/JdsScriptPlugin$JdsScriptEngine$PureDfLeafFactory.class
+             2271  02-21-2019 14:25   elasticsearch_script_plugin/JdsScriptPlugin$JdsScriptEngine$PureDfLeafFactory$2.class
+             1219  02-21-2019 14:25   elasticsearch_script_plugin/JdsScriptPlugin.class
+              249  02-21-2019 14:25   elasticsearch_script_plugin/JdsScriptPlugin$1.class
+        ---------                     -------
+            12505                     9 files
+
+        misc/zip-plugin.sh creates build/elasticsearch-script-plugin.zip
+    */
+	commandLine 'misc/zip-plugin.sh'
+}
+
+task buildPlugin {
+    dependsOn 'clean'
+    dependsOn 'jar'
+    dependsOn 'zipPlugin'
+}
+
+task docker() {
+    dependsOn 'buildPlugin'
+    doLast {
+		exec {
+			executable 'docker'
+			args 'build', '-f', 'misc/Dockerfile', '-t', 'quick-es',  '.'
+		}
+    }
+}
