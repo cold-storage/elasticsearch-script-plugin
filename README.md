@@ -60,13 +60,11 @@ term 'foo' in the 'body' field.
 curl -X PUT "localhost:9200/some/doc/1" -H 'Content-Type: application/json' -d'
 {
     "body" : "foo bar zoo baz moo foo foo foo"
-}
-'
+}'
 curl -X PUT "localhost:9200/some/doc/2" -H 'Content-Type: application/json' -d'
 {
     "body" : "foo bar baz"
-}
-'
+}'
 ```
 
 ### Run Search and Trigger Script Plugin
@@ -106,8 +104,7 @@ curl -X POST "localhost:9200/_search" -H 'Content-Type: application/json' -d'
       ]
     }
   }
-}
-'
+}'
 ```
 
 Here's the output from the above search. You can see that the score is higher
